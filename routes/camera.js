@@ -1,10 +1,12 @@
 const express = require('express');
 const onvif = require('node-onvif');
 const router = express.Router();
+require('dotenv').config();
 
 const user = process.env.USER;
 const pass = process.env.PASSWORD;
-var discovered_devices;
+
+let discovered_devices;
 let device;
 
 console.debug('Start the discovery process.');
