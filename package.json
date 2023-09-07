@@ -1,0 +1,20 @@
+{
+  "name": "onvif-integration",
+  "version": "1.0.0",
+  "description": "Integration with ONVIF compatible IP camera",
+  "main": "index.js",
+  "dependencies": {
+    "node-onvif": "^0.1.7",
+    "websocket": "^1.0.34"
+  },
+  "scripts": {
+    "start": "node index.js"
+  },
+  "keywords": [
+    "onvif",
+    "IP",
+    "camera"
+  ],
+  "author": "Denis Talochkin",
+  "license": "ISC"
+}
