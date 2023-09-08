@@ -57,7 +57,29 @@ function move_camera(x, y, z, t) {
 }
 
 router.get('/discover', function(req, res, next) {
-    res.send('Discovered camera devices: ' + discovered_devices);
+    res.send('Discovered camera devices: ' + JSON.stringify(discovered_devices, null, '  '));
+})
+
+router.get('/profile', function(req, res, next) {
+    let response = 'Current selected profile: '+ JSON.stringify(device.getCurrentProfile(), null, '  ');
+    response = response + 'Supported profile list: ' + JSON.stringify(device.getProfileList(), null, '  ');
+    res.send(response);
+})
+
+router.get('/home', function(req, res, next) {
+    let ptz = device.services.ptz;
+    if(!ptz) {
+    	return res.send('Your ONVIF network camera does not support the PTZ service.');
+  }
+  // The parameters for the gotoHomePosition() method
+  let profile = device.getCurrentProfile();
+  let params = {
+    'ProfileToken': profile['token'],
+    'Speed'       : 1
+  };
+  // Send the GotoHomePosition command using the gotoHomePosition() method
+  ptz.gotoHomePosition(params).then(() => res.send('Camera moved to home position')).catch(reason => res.status(404).send('Could not move camera to home position due to reason ' + reason));
+
 })
 
 router.get('/move', function callback(req, res, next) {
