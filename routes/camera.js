@@ -67,17 +67,17 @@ function move_camera(x, y, z, t) {
 }
 
 function position_camera(x, y, z, x_speed = 1, y_speed = 1, z_speed = 1) {
-    let ptzService = device.ptz;
+    let ptzService = device.services.ptz;
     if (!ptzService) {
         throw new Error('Your ONVIF network camera does not support the PTZ service.');
     }
-
+    console.log('Profile token: ' + device.getCurrentProfile().token)
     return ptzService.absoluteMove({
-        'ProfileToken': device['ProfileToken'],
+        'ProfileToken': device.getCurrentProfile().token,
         'Position': {
-            'x': x,
-            'y': y,
-            'z': z
+            'x': parseFloat(x),
+            'y': parseFloat(y),
+            'z': parseFloat(z)
         },
         'Speed': {
             'x': x_speed,
@@ -135,7 +135,8 @@ router.get('/move', function callback(req, res,
     }
 
     move_camera(x, y, z, timeout);
-    res.send('Move camera');
+
+    res.send(`Moved due ${timeout} seconds with x_axis_speed=${x} y_axis_speed=${y} z_axis_speed=${z}`);
 });
 
 router.get('/position', function callback(req, res,
@@ -156,8 +157,9 @@ router.get('/position', function callback(req, res,
         console.error(errorMessage);
         return res.status(404).send(errorMessage);
     }
-    console.log('Positioned to x=%s y=%s z=%s', x, y, z)
-    res.send('Position camera');
+    console.log('Positioned to x=%s y=%s z=%s', x, y, z);
+    
+    res.send(`Positioned to x=${x} y=${y} z=${z}`);
 });
 
 router.post('/move', function (req, res,
