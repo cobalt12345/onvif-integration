@@ -1,7 +1,7 @@
 # Service provides management endpoint operations for PTZ cameras
 
 Current service manages PTZ IP camera using [ONVIF (Open Network Video Interface)](https://www.onvif.org/) protocol. 
-Internally, it uses [node-onvif](https://github.com/GuilhermeC18/node-onvif/tree/master) library.
+Internally, it uses [Shinobi ONVIF](https://gitlab.com/Shinobi-Systems/shinobi-onvif) library.
 
 ## Provided operations
 
