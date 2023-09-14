@@ -131,3 +131,5 @@ dist
 
 *.iml
 .env
+
+.DS_Store

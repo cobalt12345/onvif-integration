@@ -51,19 +51,14 @@ onvif.startProbe().then((device_info_list) => {
 });
 
 function move_camera(x, y, z, t) {
-    device.ptzMove({
+    return device.ptzMove({
         'speed': {
             x: parseFloat(x),
             y: parseFloat(y),
             z: parseFloat(z)
-            // x: 1.0, // Speed of pan (in the range of -1.0 to 1.0)
-            // y: 0.0, // Speed of tilt (in the range of -1.0 to 1.0)
-            // z: 0.0  // Speed of zoom (in the range of -1.0 to 1.0)
         },
         'timeout': parseInt(t) // seconds
-    }).then(() => console.log('Moved to x=%s y=%s z=%s during %s seconds', x, y, z, t)).catch((reason) => {
-        console.error('Could not move camera to x=%s y=%s z=%s t=%s due to reason %s', x, y, z, t, reason)
-    });
+    })
 }
 
 function position_camera(x, y, z, x_speed = 1, y_speed = 1, z_speed = 1) {
@@ -90,14 +85,21 @@ function position_camera(x, y, z, x_speed = 1, y_speed = 1, z_speed = 1) {
 router.get('/discover', function (req, res,
                                   next) {
 
-    res.send('Discovered camera devices: ' + JSON.stringify(discovered_devices, null, '  '));
+    if (discovered_devices.length > 0) {
+        res.send(JSON.stringify(discovered_devices, null, '  '));
+    } else {
+        res.status(404).send("No discovered ONVIF devices");
+    }
 })
 
 router.get('/profile', function (req, res,
                                  next) {
 
-    let response = 'Current selected profile: ' + JSON.stringify(device.getCurrentProfile(), null, '  ');
-    response = response + 'Supported profile list: ' + JSON.stringify(device.getProfileList(), null, '  ');
+    let response = {
+        'selectedProfile': JSON.stringify(device.getCurrentProfile(), null, '  '),
+        'supportedProfiles': JSON.stringify(device.getProfileList(), null, '  ')
+    }
+
     res.send(response);
 })
 
@@ -114,6 +116,12 @@ router.get('/home', function (req, res,
         'ProfileToken': profile['token'],
         'Speed': 1
     };
+    //stop device movement before returning to the home position
+    ptz.stop({
+        'ProfileToken': profile['token'],
+        'PanTilt': true,
+        'Zoom': true
+    });
     // Send the GotoHomePosition command using the gotoHomePosition() method
     ptz.gotoHomePosition(params).then(() => res.send('Camera moved to home position'))
         .catch(reason => res.status(404).send('Could not move camera to home position due to reason '
@@ -130,13 +138,24 @@ router.get('/move', function callback(req, res,
     let timeout = req.query.t !== undefined ? req.query.t : 1;
 
     console.debug('x=%s, y=%s, z=%s', x, y, z);
-    if (x > 1.0 || x < -1.0 || y > 1.0 || y < -1.0 || z > 1.0 || y < -1.0) {
-        return res.send('Axis parameter value must be within the range [-1.0;1.0]')
+    if (x > 1.0 || x < -1.0 || y > 1.0 || y < -1.0 || z > 1.0 || z < 0.0) {
+
+        return res.status(400).send('Axis parameters X, Y value must be within the range [-1.0;1.0].' +
+            'Z: [0;1.0]')
     }
 
-    move_camera(x, y, z, timeout);
+    move_camera(x, y, z, timeout).then((m) => {
+        console.log('Message: ' + JSON.stringify(m, null, '  '));
+            console.log('Moved to x=%s y=%s z=%s t = %s', x, y, z, timeout);
 
-    res.send(`Moved due ${timeout} seconds with x_axis_speed=${x} y_axis_speed=${y} z_axis_speed=${z}`);
+            return res.status(200).send(`Moved due ${timeout} seconds with x_axis_speed=${x} 
+            y_axis_speed=${y} z_axis_speed=${z}`);
+        }
+    ).catch(reason => {
+
+        return res.status(500)
+            .send(`Could not move camera to x=${x} y=${y} z=${z} t=${t} due to reason: ${reason}`);
+    });
 });
 
 router.get('/position', function callback(req, res,
@@ -147,35 +166,22 @@ router.get('/position', function callback(req, res,
     let z = req.query.z !== undefined ? req.query.z : 0.0;
 
     console.debug('x=%s, y=%s, z=%s', x, y, z);
-    // if (x > 1.0 || x < -1.0 || y > 1.0 || y < -1.0 || z > 1.0 || y < -1.0) {
-    //     return res.send('Axis parameter value must be within the range [-1.0;1.0]')
-    // }
-    try {
-        position_camera(x, y, z);
-    } catch (e) {
-        const errorMessage = `Could not move camera to x=${x} y=${y} z=${z} due to reason: ${e}`;
+    if (x > 1.0 || x < -1.0 || y > 1.0 || y < -1.0 || z > 1.0 || z < 0.0) {
+
+        return res.status(400).send('Axis parameters X, Y value must be within the range [-1.0;1.0]. ' +
+            'Z: [0;1.0]')
+    }
+    position_camera(x, y, z).then((m) => {
+        console.log('Positioned to x=%s y=%s z=%s', x, y, z);
+
+        return res.status(200).send(`Positioned to x=${x} y=${y} z=${z}`);
+    }).catch(reason => {
+        const errorMessage = `Could not move camera to x=${x} y=${y} z=${z} due to reason: ${reason}`;
         console.error(errorMessage);
-        return res.status(404).send(errorMessage);
-    }
-    console.log('Positioned to x=%s y=%s z=%s', x, y, z);
-    
-    res.send(`Positioned to x=${x} y=${y} z=${z}`);
+
+        return res.status(500).send(errorMessage);
+    });
 });
 
-router.post('/move', function (req, res,
-                               next) {
-
-    let x = req.query['x'] !== undefined ? req.query['x'] : 0.0;
-    let y = req.query.y !== undefined ? req.query.y : 0.0;
-    let z = req.query.z !== undefined ? req.query.z : 0.0;
-
-    console.debug('x=%s, y=%s, z=%s', x, y, z);
-    if (x > 1.0 || x < -1.0 || y > 1.0 || y < -1.0 || z > 1.0 || y < -1.0) {
-        return res.send('Axis parameter value must be within the range [-1.0;1.0]')
-    }
-
-    move_camera(x, y, z);
-    res.send('Move camera');
-});
 
 module.exports = router;
