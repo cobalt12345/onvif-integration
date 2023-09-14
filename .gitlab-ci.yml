@@ -17,8 +17,8 @@ build:
     - echo "COPY . ." >> $DOCKERFILE
     - echo "RUN ls -la" >> $DOCKERFILE
     - echo "EXPOSE 8880" >> $DOCKERFILE
-    - echo 'CMD ["node", "service.js"]' >> $DOCKERFILE
-  #  - echo 'CMD npm run start >> $DOCKERFILE'
+  #  - echo 'CMD ["node", "service.js"]' >> $DOCKERFILE
+    - echo 'CMD npm run start >> $DOCKERFILE'
 
 
     - export VERSION=$(npm version | head -n 1 | sed 's/[^.0-9]//g')
@@ -47,7 +47,7 @@ build:
 deploy:
   stage: deploy
   only:
-    - master
+    - main
   when: manual
   script:
     - cat version.txt
