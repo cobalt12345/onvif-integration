@@ -5,6 +5,8 @@ require('dotenv').config();
 
 const user = process.env.LOGIN;
 const pass = process.env.PASSWORD;
+const x_axis_inverse = Boolean(process.env.INVERSE_X_AXIS)
+const y_axis_inverse = Boolean(process.env.INVERSE_Y_AXIS)
 
 let discovered_devices;
 let device;
@@ -51,10 +53,25 @@ onvif.startProbe().then((device_info_list) => {
 });
 
 function move_camera(x, y, z, t) {
+    let x_axis = parseFloat(x);
+    let y_axis = parseFloat(y);
+
+    if (x_axis_inverse) {
+        if (x_axis >= 0) {
+            x_axis = x_axis - 1;
+        } else {
+            x_axis = x_axis + 1;
+        }
+    }
+
+    if (y_axis_inverse) {
+        y_axis = -y_axis;
+    }
+
     return device.ptzMove({
         'speed': {
-            x: parseFloat(x),
-            y: parseFloat(y),
+            x: x_axis,
+            y: y_axis,
             z: parseFloat(z)
         },
         'timeout': parseInt(t) // seconds
@@ -62,6 +79,21 @@ function move_camera(x, y, z, t) {
 }
 
 function position_camera(x, y, z, x_speed = 1, y_speed = 1, z_speed = 1) {
+    let x_axis = parseFloat(x);
+    let y_axis = parseFloat(y);
+
+    if (x_axis_inverse) {
+        if (x_axis >= 0) {
+            x_axis = x_axis - 1;
+        } else {
+            x_axis = x_axis + 1;
+        }
+    }
+
+    if (y_axis_inverse) {
+        y_axis = -y_axis;
+    }
+
     let ptzService = device.services.ptz;
     if (!ptzService) {
         throw new Error('Your ONVIF network camera does not support the PTZ service.');
@@ -70,8 +102,8 @@ function position_camera(x, y, z, x_speed = 1, y_speed = 1, z_speed = 1) {
     return ptzService.absoluteMove({
         'ProfileToken': device.getCurrentProfile().token,
         'Position': {
-            'x': parseFloat(x),
-            'y': parseFloat(y),
+            'x': x_axis,
+            'y': y_axis,
             'z': parseFloat(z)
         },
         'Speed': {
