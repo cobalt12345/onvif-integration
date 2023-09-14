@@ -1,6 +1,6 @@
 {
   "name": "onvif-camera-adapter",
-  "version": "1.0.1",
+  "version": "1.0.2",
   "private": true,
   "description": "Integration with ONVIF compatible IP camera",
   "main": "index.js",
