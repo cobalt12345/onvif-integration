@@ -18,7 +18,7 @@ build:
     - echo "RUN ls -la" >> $DOCKERFILE
     - echo "EXPOSE 8880" >> $DOCKERFILE
     - echo 'CMD ["node", "service.js"]' >> $DOCKERFILE
-    - #echo 'CMD npm run start >> $DOCKERFILE'
+  #  - echo 'CMD npm run start >> $DOCKERFILE'
 
 
     - export VERSION=$(npm version | head -n 1 | sed 's/[^.0-9]//g')
@@ -27,15 +27,15 @@ build:
     - echo $VERSION > version.txt
 
     # version incrementation
-    - #git checkout $CI_COMMIT_REF_NAME
-    - #git pull https://group-token-antidrone:${CI_GROUP_TOKEN}@${CI_SERVER_HOST}/antidrone/$CI_PROJECT_NAME.git $CI_COMMIT_REF_NAME
-    - #npm version patch --git-tag-version false
-    - #export VERSION=$(npm version | head -n 1 | sed 's/[^.0-9]//g')
-    - #git tag -a "v$VERSION-alfa" -m "Antidrone web [deploy], new version is v$VERSION-alfa"
-    - #git push -v --progress https://group-token-antidrone:${CI_GROUP_TOKEN}@${CI_SERVER_HOST}/antidrone/$CI_PROJECT_NAME.git "v$VERSION-alfa"
-    - #git add -A -- ':!version.txt'
-    - #git commit -a -m "Increment version to $VERSION"
-    - #git push -v --progress https://group-token-antidrone:${CI_GROUP_TOKEN}@${CI_SERVER_HOST}/antidrone/$CI_PROJECT_NAME.git $CI_COMMIT_REF_NAME
+  #  - git checkout $CI_COMMIT_REF_NAME
+  #  - git pull https://group-token-antidrone:${CI_GROUP_TOKEN}@${CI_SERVER_HOST}/antidrone/$CI_PROJECT_NAME.git $CI_COMMIT_REF_NAME
+  #  - npm version patch --git-tag-version false
+  #  - export VERSION=$(npm version | head -n 1 | sed 's/[^.0-9]//g')
+  #  - git tag -a "v$VERSION-alfa" -m "Antidrone web [deploy], new version is v$VERSION-alfa"
+  #  - git push -v --progress https://group-token-antidrone:${CI_GROUP_TOKEN}@${CI_SERVER_HOST}/antidrone/$CI_PROJECT_NAME.git "v$VERSION-alfa"
+  #  - git add -A -- ':!version.txt'
+  #  - git commit -a -m "Increment version to $VERSION"
+  #  - git push -v --progress https://group-token-antidrone:${CI_GROUP_TOKEN}@${CI_SERVER_HOST}/antidrone/$CI_PROJECT_NAME.git $CI_COMMIT_REF_NAME
 
 
   artifacts:
