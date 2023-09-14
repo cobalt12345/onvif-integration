@@ -47,7 +47,7 @@ build:
 deploy:
   stage: deploy
   only:
-    - main
+    - master
   when: manual
   script:
     - cat version.txt
