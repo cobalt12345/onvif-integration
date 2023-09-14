@@ -1,0 +1,57 @@
+variables:
+  DOCKERFILE: "Dockerfile.build"
+ 
+stages:
+  - build
+  - deploy
+    
+build:
+  stage: build
+  when: manual
+  script:
+    - echo "generating $DOCKERFILE"
+    - echo "FROM node:19.5.0-alpine AS build" >> $DOCKERFILE
+    - echo "WORKDIR /app" >> $DOCKERFILE
+    - echo 'COPY ["package.json", "package-lock.json", "./"]' >> $DOCKERFILE
+    - echo "RUN npm install" >> $DOCKERFILE
+    - echo "COPY . ." >> $DOCKERFILE
+    - echo "RUN ls -la" >> $DOCKERFILE
+    - echo "EXPOSE 8880" >> $DOCKERFILE
+    - echo 'CMD ["node", "service.js"]' >> $DOCKERFILE
+    - #echo 'CMD npm run start >> $DOCKERFILE'
+
+
+    - export VERSION=$(npm version | head -n 1 | sed 's/[^.0-9]//g')
+    - DOCKER_BUILDKIT=1 docker build -f $CI_PROJECT_DIR/$DOCKERFILE -t registry.sitronics-it.com/antidrone/$CI_PROJECT_NAME:$VERSION .
+    - docker push registry.sitronics-it.com/antidrone/$CI_PROJECT_NAME:$VERSION
+    - echo $VERSION > version.txt
+
+    # version incrementation
+    - #git checkout $CI_COMMIT_REF_NAME
+    - #git pull https://group-token-antidrone:${CI_GROUP_TOKEN}@${CI_SERVER_HOST}/antidrone/$CI_PROJECT_NAME.git $CI_COMMIT_REF_NAME
+    - #npm version patch --git-tag-version false
+    - #export VERSION=$(npm version | head -n 1 | sed 's/[^.0-9]//g')
+    - #git tag -a "v$VERSION-alfa" -m "Antidrone web [deploy], new version is v$VERSION-alfa"
+    - #git push -v --progress https://group-token-antidrone:${CI_GROUP_TOKEN}@${CI_SERVER_HOST}/antidrone/$CI_PROJECT_NAME.git "v$VERSION-alfa"
+    - #git add -A -- ':!version.txt'
+    - #git commit -a -m "Increment version to $VERSION"
+    - #git push -v --progress https://group-token-antidrone:${CI_GROUP_TOKEN}@${CI_SERVER_HOST}/antidrone/$CI_PROJECT_NAME.git $CI_COMMIT_REF_NAME
+
+
+  artifacts:
+    paths:
+      - version.txt
+      - $DOCKERFILE
+    expire_in: 1 hour
+
+deploy:
+  stage: deploy
+  only:
+    - main
+  when: manual
+  script:
+    - cat version.txt
+    - export VERSION=$(cat version.txt)
+    - git clone -v --progress https://group-token-antidrone:${CI_GROUP_TOKEN}@${CI_SERVER_HOST}/antidrone/infrastructure/helm.git
+    - cd $CI_PROJECT_DIR/helm/services
+    - helm -n antidrone upgrade -i $CI_PROJECT_NAME $CI_PROJECT_NAME --set image.tag=$VERSION --kubeconfig /home/gitlab-runner/.kube/kubeconfig.yaml --wait --timeout=600s
