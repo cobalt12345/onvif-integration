@@ -25,7 +25,7 @@ LOGIN=admin # user name for ONVIF endpoint
 PASSWORD=qwerty123! # user password for ONVIF endpoint
 WARN=Port 80 on camera MUST be accessible in any way!
 # even when internal port 80 is mapped to any other value, it must also be mapped to the external 80th port!
-CAM_MGMT_URL=http://10.191.122.135:8085/onvif/device_service # onvif management endpoint
+CAM_MGMT_URL=http://213.87.92.175/onvif/device_service # onvif management endpoint
 ```
 
 2. ```npm install``` - installs all dependencies
