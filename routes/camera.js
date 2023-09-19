@@ -56,18 +56,6 @@ function move_camera(x, y, z, t) {
     let x_axis = parseFloat(x);
     let y_axis = parseFloat(y);
 
-    if (x_axis_inverse) {
-        if (x_axis >= 0) {
-            x_axis = x_axis - 1;
-        } else {
-            x_axis = x_axis + 1;
-        }
-    }
-
-    if (y_axis_inverse) {
-        y_axis = -y_axis;
-    }
-
     return device.ptzMove({
         'speed': {
             x: x_axis,
