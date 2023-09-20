@@ -158,10 +158,9 @@ router.get('/move', function callback(req, res,
     let timeout = req.query.t !== undefined ? req.query.t : 1;
 
     console.debug('x=%s, y=%s, z=%s', x, y, z);
-    if (x > 1.0 || x < -1.0 || y > 1.0 || y < -1.0 || z > 1.0 || z < 0.0) {
+    if (x > 1.0 || x < -1.0 || y > 1.0 || y < -1.0 || z > 1.0 || z < -1.0) {
 
-        return res.status(400).send('Axis parameters X, Y value must be within the range [-1.0;1.0].' +
-            'Z: [0;1.0]')
+        return res.status(400).send('Axis parameters X, Y, Z value must be within the range [-1.0;1.0].')
     }
 
     move_camera(x, y, z, timeout).then((m) => {
