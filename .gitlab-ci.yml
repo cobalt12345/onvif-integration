@@ -44,14 +44,47 @@ build:
       - $DOCKERFILE
     expire_in: 1 hour
 
-deploy:
+.base deploy:
   stage: deploy
-  only:
-    - master
-  when: manual
+  variables:
+    KUBECONFIG: "/home/gitlab-runner/.kube/kubeconfig.yaml"
+    GIT_STRATEGY: clone
+    DEPLOY_TIMEOUT: 600s
+  before_script:
+    -  |
+       echo "Проверяем наличие namespace ${RELEASE_NAMESPACE}";
+       if [ $(kubectl get ns --kubeconfig ${KUBECONFIG} | awk '{print $1}' | egrep -cix ${RELEASE_NAMESPACE}) -ne 0 ];
+        then
+          echo "Namespace ${RELEASE_NAMESPACE} существует";
+        else
+          echo "Namespace ${RELEASE_NAMESPACE} отсутствует";
+          exit 1;
+        fi;
   script:
-    - cat version.txt
-    - export VERSION=$(cat version.txt)
-    - git clone -v --progress https://group-token-antidrone:${CI_GROUP_TOKEN}@${CI_SERVER_HOST}/antidrone/infrastructure/helm.git
-    - cd $CI_PROJECT_DIR/helm/services
-    - helm -n antidrone upgrade -i $CI_PROJECT_NAME $CI_PROJECT_NAME --set image.tag=$VERSION --kubeconfig /home/gitlab-runner/.kube/kubeconfig.yaml --wait --timeout=600s
+   - echo "Деплоим сервис $CI_PROJECT_NAME в namespace ${RELEASE_NAMESPACE}"
+   - cat version.txt
+   - export VERSION=$(cat version.txt)
+   - git clone -v --progress https://group-token-antidrone:${CI_GROUP_TOKEN}@${CI_SERVER_HOST}/antidrone/infrastructure/helm.git
+   - cd $CI_PROJECT_DIR/helm/services
+   - helm -n ${RELEASE_NAMESPACE} upgrade -i $CI_PROJECT_NAME  $CI_PROJECT_NAME -f $CI_PROJECT_NAME/$VALUES_FILE --set image.tag=$VERSION --kubeconfig ${KUBECONFIG} --timeout ${DEPLOY_TIMEOUT} --wait
+   - echo "Версии микросервисов в ${RELEASE_NAMESPACE}"
+   - kubectl -n ${RELEASE_NAMESPACE} get pods --kubeconfig ${KUBECONFIG} --field-selector=status.phase!=Terminating -o jsonpath="{.items[*].spec.containers[*].image}" | tr -s "[[:space:]]" "\n" | sort | uniq
+
+deploy:antidrone:
+  extends: [".base deploy"]
+  variables:
+    VALUES_FILE: values.yaml
+    RELEASE_NAMESPACE: antidrone
+  rules:
+    - if: '$CI_COMMIT_BRANCH == "main"'
+      when: manual
+
+deploy:prod:
+  extends: [".base deploy"]
+  variables:
+    VALUES_FILE: prod-values.yaml
+    RELEASE_NAMESPACE: prod
+  rules:
+    - if: '$CI_COMMIT_BRANCH == "main"'
+      when: manual
+
