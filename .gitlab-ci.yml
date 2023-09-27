@@ -76,7 +76,7 @@ deploy:antidrone:
     VALUES_FILE: values.yaml
     RELEASE_NAMESPACE: antidrone
   rules:
-    - if: '$CI_COMMIT_BRANCH == "main"'
+    - if: '$CI_COMMIT_BRANCH == "master"'
       when: manual
 
 deploy:prod:
@@ -85,6 +85,6 @@ deploy:prod:
     VALUES_FILE: prod-values.yaml
     RELEASE_NAMESPACE: prod
   rules:
-    - if: '$CI_COMMIT_BRANCH == "main"'
+    - if: '$CI_COMMIT_BRANCH == "master"'
       when: manual
 
