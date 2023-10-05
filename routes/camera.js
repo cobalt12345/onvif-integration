@@ -5,8 +5,11 @@ require('dotenv').config();
 
 const user = process.env.LOGIN;
 const pass = process.env.PASSWORD;
-const x_axis_inverse = Boolean(process.env.INVERSE_X_AXIS)
-const y_axis_inverse = Boolean(process.env.INVERSE_Y_AXIS)
+const x_axis_inverse = process.env.INVERSE_X_AXIS.toLowerCase() === 'true'
+const y_axis_inverse = process.env.INVERSE_Y_AXIS.toLowerCase() === 'true'
+const prefer_cam_mgmt_ip_than_cam_mgmt_url =
+    process.env.PREFER_CAM_MGMT_IP_THAN_CAM_MGMT_URL.toLowerCase() === 'true';
+
 
 let discovered_devices;
 let device;
@@ -25,26 +28,22 @@ onvif.startProbe().then((device_info_list) => {
             for (let addr of info.xaddrs) {
                 console.log('  - ' + addr);
             }
-
-            console.log('Init first listed device...');
-            device = new onvif.OnvifDevice({
-                xaddr: info.xaddrs[0],
-                user,
-                pass
-            });
-        });
-    } else {
-        console.log('No devices were discovered. Init device explicitly...');
-        device = new onvif.OnvifDevice({
-            xaddr: process.env.CAM_MGMT_URL,
-            user,
-            pass
         });
     }
-    console.log(JSON.stringify(device, null, '  '));
+    const deviceInitSettings = {
+        user,
+        pass
+    }
+    if (prefer_cam_mgmt_ip_than_cam_mgmt_url) {
+        deviceInitSettings['address'] = process.env.CAM_MGMT_IP;
+    } else {
+        deviceInitSettings['xaddr'] = process.env.CAM_MGMT_URL;
+    }
+    console.log('Init device with following settings: %s', deviceInitSettings);
+    device = new onvif.OnvifDevice(deviceInitSettings);
     device.init().then((info) => {
         // Show the detailed information of the device.
-        console.log(JSON.stringify(info, null, '  '));
+        console.log('Initialized device info: %s', JSON.stringify(info, null, '  '));
     }).catch((reason) => {
         console.error('Could not initialize camera due to reason %s', reason);
     });
