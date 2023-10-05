@@ -46,6 +46,8 @@ onvif.startProbe().then((device_info_list) => {
         console.log('Initialized device info: %s', JSON.stringify(info, null, '  '));
     }).catch((reason) => {
         console.error('Could not initialize camera due to reason %s', reason);
+
+        throw Error(reason);
     });
 }).catch((error) => {
     console.error(error);
