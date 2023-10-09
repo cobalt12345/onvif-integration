@@ -10,6 +10,9 @@ const y_axis_inverse = process.env.INVERSE_Y_AXIS.toLowerCase() === 'true'
 const prefer_cam_mgmt_ip_than_cam_mgmt_url =
     process.env.PREFER_CAM_MGMT_IP_THAN_CAM_MGMT_URL.toLowerCase() === 'true';
 
+const cam_zero_azimuth = Number(process.env.CAM_ZERO_AZIMUTH);
+console.log('Camera zero azimuth: %s = %d', typeof cam_zero_azimuth, cam_zero_azimuth)
+
 
 let discovered_devices;
 let device;
@@ -71,6 +74,7 @@ function position_camera(x, y, z, x_speed = 1, y_speed = 1, z_speed = 1) {
     let x_axis = parseFloat(x);
     let y_axis = parseFloat(y);
 
+    // inverse control - X
     if (x_axis_inverse) {
         if (x_axis >= 0) {
             x_axis = x_axis - 1;
@@ -78,6 +82,8 @@ function position_camera(x, y, z, x_speed = 1, y_speed = 1, z_speed = 1) {
             x_axis = x_axis + 1;
         }
     }
+    // precision based on camera zero azimuth
+    x_axis = x_axis - cam_zero_azimuth;
 
     if (y_axis_inverse) {
         y_axis = -y_axis;
