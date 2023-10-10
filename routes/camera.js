@@ -83,7 +83,17 @@ function position_camera(x, y, z, x_speed = 1, y_speed = 1, z_speed = 1) {
         }
     }
     // precision based on camera zero azimuth
-    x_axis = x_axis - cam_zero_azimuth;
+    if ((x_axis - cam_zero_azimuth >= -1) && (x_axis - cam_zero_azimuth) <= 1) {
+        x_axis = x_axis - cam_zero_azimuth;
+    } else if ((x_axis - cam_zero_azimuth) < -1) {
+        x_axis = 1 + ((x_axis - cam_zero_azimuth) % 1);
+    } else if ((x_axis - cam_zero_azimuth) > 1) {
+        x_axis = -(1 - ((x_axis - cam_zero_azimuth) % 1));
+    }
+
+    if (Math.abs(x_axis) > 1) {
+        throw Error('Precision algorithm error. Gamma\' is out of range [-1;+1]');
+    }
 
     if (y_axis_inverse) {
         y_axis = -y_axis;
