@@ -10,6 +10,9 @@ const y_axis_inverse = process.env.INVERSE_Y_AXIS.toLowerCase() === 'true'
 const prefer_cam_mgmt_ip_than_cam_mgmt_url =
     process.env.PREFER_CAM_MGMT_IP_THAN_CAM_MGMT_URL.toLowerCase() === 'true';
 
+const cam_not_support_abs_move_timeout =
+    process.env.CAM_NOT_SUPPORT_ABS_MOVE_TIMEOUT.toLowerCase() === 'true';
+
 const cam_zero_azimuth = Number(process.env.CAM_ZERO_AZIMUTH);
 console.log('Camera zero azimuth: %s = %d', typeof cam_zero_azimuth, cam_zero_azimuth)
 
@@ -68,6 +71,11 @@ function move_camera(x, y, z, t) {
         },
         'timeout': parseInt(t) // seconds
     })
+}
+
+function stop_camera() {
+    device.ptzStop().then(console.log('Camera stopped moving')).catch((error) =>
+        console.error('Stop movement failed due to reason: %s', error));
 }
 
 function position_camera(x, y, z, x_speed = 1, y_speed = 1, z_speed = 1) {
@@ -181,16 +189,19 @@ router.get('/move', function callback(req, res,
     }
 
     move_camera(x, y, z, timeout).then((m) => {
-        console.log('Message: ' + JSON.stringify(m, null, '  '));
-            console.log('Moved to x=%s y=%s z=%s t = %s', x, y, z, timeout);
-
+        if (cam_not_support_abs_move_timeout) {
+            setTimeout(()=>{
+                stop_camera();
+            }, timeout * 1000);
+        }
+        console.log('Moved to x=%s y=%s z=%s t=%s', x, y, z, timeout);
             return res.status(200).send(`Moved due ${timeout} seconds with x_axis_speed=${x} 
             y_axis_speed=${y} z_axis_speed=${z}`);
         }
     ).catch(reason => {
 
         return res.status(500)
-            .send(`Could not move camera to x=${x} y=${y} z=${z} t=${t} due to reason: ${reason}`);
+            .send(`Could not move camera to x=${x} y=${y} z=${z} t=${timeout} due to reason: ${reason}`);
     });
 });
 
